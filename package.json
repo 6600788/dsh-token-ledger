@@ -1,0 +1,78 @@
+{
+  "name": "dsh-token-ledger",
+  "version": "1.2.0",
+  "description": "DSH sidebar plugin: a local token-usage ledger with two independent books (before / after), exact per-bucket accounting, and week/month/day filters.",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "lib/",
+    "cordis.patch.yml",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    },
+    "engines": {
+      "dsh": ">=0.1.5-rc.1"
+    }
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "test": "node --check lib/index.js && node --check lib/client.js && node test/exact.mjs && node test/mock-host.mjs && node test/parity.mjs && node test/_real-check.mjs",
+    "test:exact": "node test/exact.mjs",
+    "test:host": "node test/mock-host.mjs",
+    "test:parity": "node test/parity.mjs",
+    "test:real": "node test/_real-check.mjs"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "token",
+    "usage",
+    "ledger",
+    "analytics"
+  ],
+  "author": "dsh-token-ledger contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/6600788/dsh-token-ledger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/6600788/dsh-token-ledger/issues"
+  },
+  "homepage": "https://github.com/6600788/dsh-token-ledger#readme",
+  "engines": {
+    "node": ">=18"
+  }
+}

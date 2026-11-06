@@ -1,0 +1,24 @@
+# Real ledgers, editor junk, build output, and secrets must never be committed.
+node_modules/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local runtime data
+.dsh/
+token-ledger/
+ledger.json
+ledger.json.tmp
+events.archive.json
+.dshw-usage.json
+.codearts-usage.json
+
+# Scratch / private diagnostics
+scratch/
+private/
+*.local.*
+.env
+.env.*
+!.env.example

@@ -1,0 +1,9 @@
+# Bundle patch for dsh-token-ledger.
+#
+# This is what turns the package into a PROFILE LAYER: when the plugin is
+# installed into a profile, DSH joins this patch to the bundle stack and the
+# insert row mounts the host half. Without it the package installs but stays
+# inert ("declares no dsh.bundle").
+- insert:
+    - id: dsh-token-ledger
+      name: dsh-token-ledger
