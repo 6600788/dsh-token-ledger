@@ -1,6 +1,6 @@
 {
   "name": "dsh-token-ledger",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "DSH sidebar plugin: a local token-usage ledger with two independent books (before / after), exact per-bucket accounting, and week/month/day filters.",
   "type": "module",
   "main": "./lib/index.js",

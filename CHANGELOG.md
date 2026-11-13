@@ -3,6 +3,41 @@
 All notable changes to this project are documented here. Versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.3.0
+
+可选成本估算 + CSV 导出。**核心 token 数字仍然是零估算**：`input` /
+`cacheRead` / `cacheWrite` / `output` 全部沿用 provider 上报的原始值，本次新增
+的 cost 字段完全 opt-in —— 只有当用户自己提供了一张 per-model 价目表时才会出现，
+否则所有 cost 列为 `null`、UI 隐藏金额、CSV 该列为空。
+
+- **`/export.csv`**：逐事件导出为 Excel 可读的 UTF-8 CSV（带 BOM）。
+  表头固定 `ts,day,session_id,session_title,turn,model,input,cache_read,
+  cache_write,output,reasoning,total,provider_cost,cost_estimate,source`；
+  含 ETag / 304 短路；`provider_cost` 是 provider 自报花费（绝大多数模型为空），
+  `cost_estimate` 仅在价目表加载时填充。
+- **`/prices.json`**（GET + POST）：管理可选的 per-model 价目表。
+  GET 返回 `{path, table, invalid, doc, models}`，其中 `models` 是账本里出现过
+  的模型名列表、`doc` 是自带注释的模板。POST 接受 `{"prices": {...}}` 原样落盘到
+  `<dataDir>/prices.json`，传空对象 `{}` 即清空（金额列再次消失）。
+  文件格式：键是模型名（大小写不敏感），值可以是单个数字（四桶同价）或
+  `{input, cacheRead, cacheWrite, output}` 四桶单价，单位 USD / 1M tokens；
+  `_` 开头键与 `$schema` / `$comment` 键作为注释忽略；解析失败的条目计入
+  `invalid`，不污染其余有效条目。
+- **可选成本估算字段**：`data.json` / `query.json` 的 `totals`、`groups.before` /
+  `groups.after`、`sessions[]`、`models[]` 均增加 `costEstimate` /
+  `costEstimateEvents` 字段；无价目表时为 `null`。计算公式
+  `(input*p.input + cacheRead*p.cacheRead + cacheWrite*p.cacheWrite +
+  output*p.output) / 1_000_000`。
+- **`health.json`**：新增 `priced`（bool，是否加载了价目表）与 `priceTablePath`
+  字段，便于排查价目表是否生效。
+- **客户端**：标题栏加「导出 CSV」按钮；筛选范围摘要行在价目表已加载时
+  追加 `· 估算成本 $X.XX`（带 `tl-exact` class，与 token 数一致遵循零估算
+  排版规则）；无价目表时该提示不出现。
+- **版本**：`VERSION` 常量与 `package.json` 同步升到 1.3.0。
+- **测试**：四套件全部保持绿；`exact.mjs` 的 `Math.round(` host 侧唯一约束
+  （ISO 周算术）与 client 侧禁 `compact(` / `/ 1e(N)` / `.toFixed(N)+"B"` 约束
+  均未被新代码触犯。
+
 ## 1.2.0
 
 性能与开源发布版本。

@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/6600788/dsh-token-ledger/actions/workflows/ci.yml/badge.svg)](https://github.com/6600788/dsh-token-ledger/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![awesome-dsh-plugin](https://img.shields.io/badge/listed_awesome--dsh--plugin-%E2%9C%93-blue?logo=github)](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin)
 
 A sidebar plugin for [DeepSeek Harness (DSH)](https://github.com/deepseek-ai) that keeps a
 **fully local** token-usage ledger. It adds a **「Token 账本」** entry to the left sidebar
@@ -17,6 +18,7 @@ and opens a full statistics page.
 - Exact values only: full digits with thousands separators, never `K` / `M` / `B`, never rounded or estimated.
 - Four-bucket accounting (`input` / `cacheRead` / `cacheWrite` / `output`); `reasoningTokens` is a subset of output and is never double-counted.
 - Global filters: today / this week / last week / this month / last month / last 7 or 30 days, custom date range, any ISO week, any calendar month.
+- **Optional cost estimate**: provide a per-model price table and `data.json` / `query.json` will expose a `costEstimate` field; tokens are always zero-estimation.
 - Cached server-side aggregation with `ETag` / `304`, so an idle page costs a bare ~200-byte response instead of re-downloading a large JSON payload.
 - Client-side fallback that reproduces the host's numbers exactly when the host is still on an older build.
 
@@ -247,6 +249,59 @@ node test/_real-check.mjs
 
 `DSH_TOKEN_LEDGER_REAL=/path/to/ledger.json` 可指定用于可选真实数据检查的账本；
 `DSH_HOME` 可覆盖账本根目录。所有测试都在临时目录操作，不写入真实账本。
+
+## 可选成本估算 · Optional cost estimate
+
+**核心 token 数字仍然是零估算**：`input` / `cacheRead` / `cacheWrite` / `output`
+全部沿用 provider 上报的原始值。新增的 cost 字段完全 opt-in —— 只有当你自己提供
+一张 per-model 价目表时才会出现；否则所有 cost 列为 `null`、UI 隐藏金额、CSV
+该列留空。
+
+### 价目表位置
+
+`<DSH_DATA_ROOT>/dsh-token-ledger/prices.json`，具体路径可从 `health.json` 的
+`priceTablePath` 字段拿到。
+
+### 文件格式
+
+```jsonc
+{
+  "_comment": "Optional. Prices in USD per 1M tokens. Delete a key (or the file) to hide cost.",
+  "deepseek-chat": { "input": 0.27, "cacheRead": 0.07, "cacheWrite": 0.27, "output": 1.1 },
+  "deepseek-reasoner": { "input": 0.55, "cacheRead": 0.14, "cacheWrite": 0.55, "output": 2.19 },
+  "some-model-with-flat-rate": 3.0  // 四桶同价
+}
+```
+
+规则：
+
+- 模型键**大小写不敏感**（内部统一 lowercase）。
+- 值可为单个数字（四桶同价）或 `{input, cacheRead, cacheWrite, output}` 四桶单价。
+- 单位 **USD / 1M tokens**。
+- `_` 开头键与 `$schema` / `$comment` 键作为注释忽略；解析失败的条目计入
+  `invalid`，不污染其余有效条目。
+
+### 管理方式
+
+1. **REST**：`GET /dsh-token-ledger/prices.json` 返回 `{path, table, invalid, doc,
+   models}`（`doc` 是自带注释的模板，`models` 是账本里出现过的模型名列表）；
+   `POST /dsh-token-ledger/prices.json` body `{"prices": {...}}` 原样落盘，传空
+   对象 `{}` 即清空（金额列再次消失）。
+2. **直接编辑文件**：每次请求都读盘，无需重启宿主。
+3. **UI 编辑面板**：当前版本未加，后续补。
+
+### 计算与字段位置
+
+`cost = (input*p.input + cacheRead*p.cacheRead + cacheWrite*p.cacheWrite +
+output*p.output) / 1_000_000`。字段出现在：
+
+- `totals.costEstimate` / `totals.costEstimateEvents`
+- `groups.before.costEstimate` / `groups.after.costEstimate`
+- `sessions[].costEstimate`
+- `models[].costEstimate`
+- CSV 的 `cost_estimate` 列
+
+无价目表时这些字段均为 `null`、UI 隐藏金额、CSV 该列留空。
 
 ## License
 
